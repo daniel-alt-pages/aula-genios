@@ -5,6 +5,8 @@ import { loadStudentsFromCSV } from '../lib/csvParser';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 
+import api from '../services/api';
+
 export default function CredentialsPanel() {
     const [credentials, setCredentials] = useState([]);
     const [filteredCreds, setFilteredCreds] = useState([]);
@@ -22,33 +24,26 @@ export default function CredentialsPanel() {
     }, [searchTerm, filterRole, credentials]);
 
     const loadCredentials = async () => {
-        // Cargar usuarios del sistema
-        const users = db.get('users');
-
-        // Cargar estudiantes del CSV
-        let students = db.get('students');
-        if (students.length === 0) {
-            students = await loadStudentsFromCSV();
-            db.setAll('students', students);
+        try {
+            const response = await api.credentials.getAll();
+            if (response.success && response.usuarios) {
+                const creds = response.usuarios.map(user => ({
+                    id: user.id,
+                    name: user.nombre,
+                    email: user.email,
+                    role: user.rol,
+                    password: user.password,
+                    plan: 'Plan Básico', // Placeholder
+                    status: user.activo ? 'Activo' : 'Inactivo',
+                    docId: user.id // Usamos ID como documento por ahora
+                }));
+                setCredentials(creds);
+                setFilteredCreds(creds);
+            }
+        } catch (error) {
+            console.error('Error loading credentials:', error);
+            // Fallback opcional o mostrar error
         }
-
-        // Combinar todos los usuarios
-        const allUsers = [...users, ...students];
-
-        // Generar credenciales (en producción, estas vendrían de la BD)
-        const creds = allUsers.map(user => ({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role || 'student',
-            password: user.password || 'genios2025', // Contraseña por defecto
-            plan: user.plan || 'Plan Básico',
-            status: user.status || 'Activo',
-            docId: user.docId || 'N/A'
-        }));
-
-        setCredentials(creds);
-        setFilteredCreds(creds);
     };
 
     const filterCredentials = () => {

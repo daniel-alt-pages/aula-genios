@@ -158,6 +158,20 @@ export const credentialsAPI = {
     }
 };
 
+export const postsAPI = {
+    getAll: async (classId) => {
+        const data = await apiFetch(`/classes/${classId}/posts`);
+        return data.posts || [];
+    },
+    create: async (classId, content) => {
+        const data = await apiFetch(`/classes/${classId}/posts`, {
+            method: 'POST',
+            body: JSON.stringify({ content })
+        });
+        return data.post;
+    }
+};
+
 export const classesAPI = {
     getAll: async () => {
         const data = await apiFetch('/classes');
@@ -176,6 +190,9 @@ export const classesAPI = {
     }),
     delete: async (id) => apiFetch(`/classes/${id}`, {
         method: 'DELETE'
+    }),
+    removeStudent: async (classId, studentId) => apiFetch(`/classes/${classId}/students/${studentId}`, {
+        method: 'DELETE'
     })
 };
 
@@ -189,5 +206,6 @@ export default {
     enrollment: enrollmentAPI,
     forum: forumAPI,
     settings: settingsAPI,
-    credentials: credentialsAPI
+    credentials: credentialsAPI,
+    posts: postsAPI
 };

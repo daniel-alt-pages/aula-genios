@@ -20,6 +20,9 @@ export default function CredentialsManager() {
         avatar: ''
     });
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterRole, setFilterRole] = useState('all');
+
     useEffect(() => {
         loadCredentials();
     }, []);
@@ -129,17 +132,27 @@ export default function CredentialsManager() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Cargando credenciales...</div>;
+    const filteredCredentials = credentials.filter(user => {
+        const matchesSearch = (
+            user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.id.includes(searchTerm)
+        );
+        const matchesRole = filterRole === 'all' || user.rol === filterRole;
+        return matchesSearch && matchesRole;
+    });
 
     const admins = credentials.filter(u => u.rol === 'admin');
     const teachers = credentials.filter(u => u.rol === 'teacher');
     const students = credentials.filter(u => u.rol === 'student');
 
+    if (loading) return <div className="p-8 text-center">Cargando credenciales...</div>;
+
     return (
         <div className="space-y-6">
             {/* Header */}
             <Card className="p-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
                         <h2 className="text-2xl font-bold mb-2">🔐 Gestión de Credenciales</h2>
                         <p className="text-indigo-100">
@@ -166,6 +179,29 @@ export default function CredentialsManager() {
                 </div>
             </Card>
 
+            {/* Filters */}
+            <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre, email o ID..."
+                        className="w-full pl-4 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <select
+                    className="p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    value={filterRole}
+                    onChange={(e) => setFilterRole(e.target.value)}
+                >
+                    <option value="all">Todos los roles</option>
+                    <option value="student">Estudiantes</option>
+                    <option value="teacher">Profesores</option>
+                    <option value="admin">Administradores</option>
+                </select>
+            </div>
+
             {/* Credentials Table */}
             <Card className="overflow-hidden">
                 <div className="overflow-x-auto">
@@ -181,7 +217,7 @@ export default function CredentialsManager() {
                             </tr>
                         </thead>
                         <tbody>
-                            {credentials.map(user => (
+                            {filteredCredentials.map(user => (
                                 <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
@@ -213,8 +249,8 @@ export default function CredentialsManager() {
                                     </td>
                                     <td className="p-4">
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${user.activo
-                                                ? 'bg-green-100 text-green-700 border border-green-200'
-                                                : 'bg-red-100 text-red-700 border border-red-200'
+                                            ? 'bg-green-100 text-green-700 border border-green-200'
+                                            : 'bg-red-100 text-red-700 border border-red-200'
                                             }`}>
                                             {user.activo ? '✓ Activo' : '✗ Inactivo'}
                                         </span>

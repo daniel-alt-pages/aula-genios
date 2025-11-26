@@ -1,21 +1,27 @@
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { readFile, writeFile } from 'fs/promises';
 import { randomUUID } from 'crypto';
-import driveService from './googleDriveService.js';
+import dotenv from 'dotenv';
+import connectDB from './config/db.js';
+import User from './models/User.js';
+import Course from './models/Course.js';
 import { initializeDrive, registerDriveRoutes } from './driveRoutes.js';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3002;
-const JWT_SECRET = 'aula-genios-secret-key-2025';
+const JWT_SECRET = process.env.JWT_SECRET || 'aula-genios-secret-key-2025';
+
+// Connect to MongoDB
+connectDB();
 
 // Middleware
 app.use(cors());
@@ -50,67 +56,6 @@ const authenticateToken = (req, res, next) => {
 };
 
 // ============================================
-// CREDENTIALS JSON HELPERS
-// ============================================
-
-const CREDENTIALS_FILE = join(__dirname, '..', 'credenciales.json');
-const COURSES_FILE = join(__dirname, '..', 'cursos.json');
-
-async function readCourses() {
-    try {
-        const data = await readFile(COURSES_FILE, 'utf-8');
-        return JSON.parse(data);
-    } catch (error) {
-        const initialData = { cursos: [] };
-        await writeCourses(initialData);
-        return initialData;
-    }
-}
-
-async function writeCourses(data) {
-    await writeFile(COURSES_FILE, JSON.stringify(data, null, 2), 'utf-8');
-}
-
-async function readCredentials() {
-    try {
-        const data = await readFile(CREDENTIALS_FILE, 'utf-8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error('Error reading credentials:', error);
-        const defaultData = {
-            plataforma: "Aula Genios - Seamos Genios Colombia",
-            version: "2.0.0",
-            fecha_actualizacion: new Date().toISOString().split('T')[0],
-            usuarios: [
-                {
-                    id: "admin001",
-                    nombre: "Administrador Principal",
-                    email: "admin@aula.com",
-                    password: "admin2025",
-                    rol: "admin",
-                    avatar: "👨‍💼",
-                    activo: true,
-                    fecha_creacion: new Date().toISOString().split('T')[0]
-                }
-            ]
-        };
-        await writeFile(CREDENTIALS_FILE, JSON.stringify(defaultData, null, 2));
-        return defaultData;
-    }
-}
-
-async function writeCredentials(data) {
-    try {
-        data.fecha_actualizacion = new Date().toISOString().split('T')[0];
-        await writeFile(CREDENTIALS_FILE, JSON.stringify(data, null, 2));
-        return true;
-    } catch (error) {
-        console.error('Error writing credentials:', error);
-        return false;
-    }
-}
-
-// ============================================
 // AUTH ROUTES
 // ============================================
 
@@ -118,11 +63,12 @@ app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const credentials = await readCredentials();
-        const user = credentials.usuarios.find(u => u.email === email);
+        const user = await User.findOne({ email });
 
         if (!user) return res.status(401).json({ error: 'Credenciales incorrectas' });
         if (!user.activo) return res.status(401).json({ error: 'Usuario inactivo' });
+
+        // Plain text password comparison as requested
         if (password !== user.password) return res.status(401).json({ error: 'Credenciales incorrectas' });
 
         const token = jwt.sign(
@@ -149,8 +95,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
     try {
-        const credentials = await readCredentials();
-        const user = credentials.usuarios.find(u => u.id === req.user.id);
+        const user = await User.findOne({ id: req.user.id });
 
         if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -172,20 +117,19 @@ app.get('/api/chat/:classId?', (req, res) => res.json({ success: true, messages:
 app.get('/api/settings', (req, res) => res.json({ success: true, settings: {} }));
 
 // ============================================
-// COURSES / CLASSES ROUTES (JSON)
+// COURSES / CLASSES ROUTES (MONGODB)
 // ============================================
 
 app.get('/api/classes', authenticateToken, async (req, res) => {
     try {
-        const data = await readCourses();
-        let courses = data.cursos;
-
+        let query = {};
         if (req.user.role === 'teacher') {
-            courses = courses.filter(c => c.profesorId === req.user.id);
+            query = { profesorId: req.user.id };
         } else if (req.user.role === 'student') {
-            courses = courses.filter(c => c.estudiantes && c.estudiantes.includes(req.user.id));
+            query = { estudiantes: req.user.id };
         }
 
+        const courses = await Course.find(query);
         res.json({ success: true, classes: courses });
     } catch (error) {
         console.error('Get classes error:', error);
@@ -200,7 +144,6 @@ app.post('/api/classes', authenticateToken, async (req, res) => {
 
     try {
         const { name, title, section, code, color, icon, description, teacherId, teacherName } = req.body;
-        const data = await readCourses();
 
         let assignedTeacherId = req.user.id;
         let assignedTeacherName = req.user.name || req.user.nombre;
@@ -215,7 +158,7 @@ app.post('/api/classes', authenticateToken, async (req, res) => {
             }
         }
 
-        const newCourse = {
+        const newCourse = await Course.create({
             id: randomUUID(),
             nombre: name || title || 'Nueva Clase',
             code: code || '',
@@ -227,55 +170,13 @@ app.post('/api/classes', authenticateToken, async (req, res) => {
             descripcion: description || '',
             estudiantes: [],
             modulos: [],
+            posts: [],
             fecha_creacion: new Date().toISOString()
-        };
-
-        data.cursos.push(newCourse);
-        await writeCourses(data);
+        });
 
         res.json({ success: true, class: newCourse, course: newCourse });
     } catch (error) {
         console.error('Create class error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-app.get('/api/courses', authenticateToken, async (req, res) => {
-    try {
-        const data = await readCourses();
-        res.json(data.cursos);
-    } catch (error) {
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-app.post('/api/courses', authenticateToken, async (req, res) => {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
-
-    try {
-        const { code, title, color, icon } = req.body;
-        const data = await readCourses();
-
-        const newCourse = {
-            id: randomUUID(),
-            nombre: title,
-            code: code,
-            seccion: 'General',
-            profesorId: 'admin',
-            profesorNombre: 'Administrador',
-            color: color || 'blue',
-            icono: icon || '📚',
-            descripcion: '',
-            estudiantes: [],
-            modulos: [],
-            fecha_creacion: new Date().toISOString()
-        };
-
-        data.cursos.push(newCourse);
-        await writeCourses(data);
-
-        res.json({ success: true, course: newCourse });
-    } catch (error) {
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -292,30 +193,22 @@ app.post('/api/classes/:classId/enroll', authenticateToken, async (req, res) => 
         const targetId = userId || studentId;
         if (!targetId) return res.status(400).json({ error: 'User ID required' });
 
-        const data = await readCourses();
-        const courseIndex = data.cursos.findIndex(c => c.id === classId);
-
-        if (courseIndex === -1) return res.status(404).json({ error: 'Class not found' });
+        const course = await Course.findOne({ id: classId });
+        if (!course) return res.status(404).json({ error: 'Class not found' });
 
         if (role === 'teacher') {
-            const credentials = await readCredentials();
-            const teacher = credentials.usuarios.find(u => u.id === targetId);
-
-            data.cursos[courseIndex].profesorId = targetId;
+            const teacher = await User.findOne({ id: targetId });
+            course.profesorId = targetId;
             if (teacher) {
-                data.cursos[courseIndex].profesorNombre = teacher.nombre;
+                course.profesorNombre = teacher.nombre;
             }
-            await writeCourses(data);
+            await course.save();
             return res.json({ success: true, message: 'Teacher assigned' });
         }
 
-        if (!data.cursos[courseIndex].estudiantes) {
-            data.cursos[courseIndex].estudiantes = [];
-        }
-
-        if (!data.cursos[courseIndex].estudiantes.includes(targetId)) {
-            data.cursos[courseIndex].estudiantes.push(targetId);
-            await writeCourses(data);
+        if (!course.estudiantes.includes(targetId)) {
+            course.estudiantes.push(targetId);
+            await course.save();
         }
 
         res.json({ success: true, message: 'Student enrolled' });
@@ -325,8 +218,113 @@ app.post('/api/classes/:classId/enroll', authenticateToken, async (req, res) => 
     }
 });
 
+app.delete('/api/classes/:classId/students/:studentId', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
+        return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    try {
+        const { classId, studentId } = req.params;
+        const course = await Course.findOne({ id: classId });
+
+        if (!course) return res.status(404).json({ error: 'Class not found' });
+
+        course.estudiantes = course.estudiantes.filter(id => id !== studentId);
+        await course.save();
+
+        res.json({ success: true, message: 'Student removed' });
+    } catch (error) {
+        console.error('Remove student error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.get('/api/classes/:classId/posts', authenticateToken, async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const course = await Course.findOne({ id: classId });
+
+        if (!course) return res.status(404).json({ error: 'Class not found' });
+
+        res.json({ success: true, posts: course.posts || [] });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/classes/:classId/posts', authenticateToken, async (req, res) => {
+    if (req.user.role === 'student') {
+        if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Only teachers can post announcements' });
+        }
+    }
+
+    try {
+        const { classId } = req.params;
+        const { content } = req.body;
+
+        const course = await Course.findOne({ id: classId });
+        if (!course) return res.status(404).json({ error: 'Class not found' });
+
+        const newPost = {
+            id: Date.now(),
+            author: req.user.name || req.user.nombre,
+            authorId: req.user.id,
+            content,
+            date: new Date().toLocaleDateString(),
+            timestamp: new Date().toISOString(),
+            comments: [],
+            type: 'post'
+        };
+
+        course.posts.unshift(newPost);
+        await course.save();
+
+        res.json({ success: true, post: newPost });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.get('/api/courses', authenticateToken, async (req, res) => {
+    try {
+        const courses = await Course.find({});
+        res.json(courses);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/courses', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
+
+    try {
+        const { code, title, color, icon } = req.body;
+
+        const newCourse = await Course.create({
+            id: randomUUID(),
+            nombre: title,
+            code: code,
+            seccion: 'General',
+            profesorId: 'admin',
+            profesorNombre: 'Administrador',
+            color: color || 'blue',
+            icono: icon || '📚',
+            descripcion: '',
+            estudiantes: [],
+            modulos: [],
+            posts: [],
+            fecha_creacion: new Date().toISOString()
+        });
+
+        res.json({ success: true, course: newCourse });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // ============================================
-// CREDENTIALS MANAGEMENT ROUTES
+// CREDENTIALS MANAGEMENT ROUTES (MONGODB)
 // ============================================
 
 app.get('/api/credentials', authenticateToken, async (req, res) => {
@@ -335,15 +333,15 @@ app.get('/api/credentials', authenticateToken, async (req, res) => {
     }
 
     try {
-        const credentials = await readCredentials();
+        const users = await User.find({});
         res.json({
             success: true,
-            usuarios: credentials.usuarios,
+            usuarios: users,
             metadata: {
-                plataforma: credentials.plataforma,
-                version: credentials.version,
-                fecha_actualizacion: credentials.fecha_actualizacion,
-                total_usuarios: credentials.usuarios.length
+                plataforma: "Aula Genios",
+                version: "2.1.0 (MongoDB)",
+                fecha_actualizacion: new Date().toISOString(),
+                total_usuarios: users.length
             }
         });
     } catch (error) {
@@ -363,34 +361,26 @@ app.post('/api/credentials', authenticateToken, async (req, res) => {
         return res.status(400).json({ error: 'Faltan campos requeridos: nombre, email, password, rol' });
     }
 
-    if (!['admin', 'teacher', 'student'].includes(rol)) {
-        return res.status(400).json({ error: 'Rol inválido. Use: admin, teacher o student' });
-    }
-
     try {
-        const credentials = await readCredentials();
-
-        if (credentials.usuarios.find(u => u.email === email)) {
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
             return res.status(400).json({ error: 'El email ya está registrado' });
         }
 
-        const newUser = {
+        const newUser = await User.create({
             id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             nombre,
             email,
-            password,
+            password, // Plain text as requested
             rol,
             avatar: avatar || (rol === 'admin' ? '👨‍💼' : rol === 'teacher' ? '👨‍🏫' : '👨‍🎓'),
             activo: true,
             fecha_creacion: new Date().toISOString().split('T')[0]
-        };
-
-        credentials.usuarios.push(newUser);
-        await writeCredentials(credentials);
+        });
 
         res.json({
             success: true,
-            usuario: { ...newUser, password: undefined },
+            usuario: newUser,
             message: 'Usuario creado exitosamente'
         });
     } catch (error) {
@@ -408,33 +398,26 @@ app.put('/api/credentials/:id', authenticateToken, async (req, res) => {
     const { nombre, email, password, rol, avatar, activo } = req.body;
 
     try {
-        const credentials = await readCredentials();
-        const userIndex = credentials.usuarios.findIndex(u => u.id === id);
+        const user = await User.findOne({ id });
+        if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-        if (userIndex === -1) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
+        if (email && email !== user.email) {
+            const emailExists = await User.findOne({ email });
+            if (emailExists) return res.status(400).json({ error: 'El email ya está registrado' });
         }
 
-        if (email && email !== credentials.usuarios[userIndex].email) {
-            if (credentials.usuarios.find(u => u.email === email && u.id !== id)) {
-                return res.status(400).json({ error: 'El email ya está registrado' });
-            }
-        }
+        if (nombre) user.nombre = nombre;
+        if (email) user.email = email;
+        if (password) user.password = password;
+        if (rol) user.rol = rol;
+        if (avatar) user.avatar = avatar;
+        if (typeof activo === 'boolean') user.activo = activo;
 
-        if (nombre) credentials.usuarios[userIndex].nombre = nombre;
-        if (email) credentials.usuarios[userIndex].email = email;
-        if (password) credentials.usuarios[userIndex].password = password;
-        if (rol && ['admin', 'teacher', 'student'].includes(rol)) {
-            credentials.usuarios[userIndex].rol = rol;
-        }
-        if (avatar) credentials.usuarios[userIndex].avatar = avatar;
-        if (typeof activo === 'boolean') credentials.usuarios[userIndex].activo = activo;
-
-        await writeCredentials(credentials);
+        await user.save();
 
         res.json({
             success: true,
-            usuario: { ...credentials.usuarios[userIndex], password: undefined },
+            usuario: user,
             message: 'Usuario actualizado exitosamente'
         });
     } catch (error) {
@@ -451,23 +434,17 @@ app.delete('/api/credentials/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     try {
-        const credentials = await readCredentials();
-        const userIndex = credentials.usuarios.findIndex(u => u.id === id);
+        const user = await User.findOne({ id });
+        if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-        if (userIndex === -1) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
-
-        const user = credentials.usuarios[userIndex];
         if (user.rol === 'admin') {
-            const adminCount = credentials.usuarios.filter(u => u.rol === 'admin').length;
+            const adminCount = await User.countDocuments({ rol: 'admin' });
             if (adminCount <= 1) {
                 return res.status(400).json({ error: 'No se puede eliminar el último administrador' });
             }
         }
 
-        credentials.usuarios.splice(userIndex, 1);
-        await writeCredentials(credentials);
+        await User.deleteOne({ id });
 
         res.json({
             success: true,
@@ -485,10 +462,10 @@ app.get('/api/credentials/export/csv', authenticateToken, async (req, res) => {
     }
 
     try {
-        const credentials = await readCredentials();
+        const users = await User.find({});
 
         let csv = 'ID,Nombre,Email,Password,Rol,Avatar,Activo,Fecha Creación\n';
-        credentials.usuarios.forEach(user => {
+        users.forEach(user => {
             csv += `${user.id},"${user.nombre}",${user.email},${user.password},${user.rol},${user.avatar || ''},${user.activo},${user.fecha_creacion}\n`;
         });
 
@@ -505,8 +482,8 @@ app.get('/api/users', authenticateToken, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
 
     try {
-        const credentials = await readCredentials();
-        const users = credentials.usuarios.map(u => ({
+        const users = await User.find({});
+        const mappedUsers = users.map(u => ({
             id: u.id,
             name: u.nombre,
             email: u.email,
@@ -514,7 +491,7 @@ app.get('/api/users', authenticateToken, async (req, res) => {
             avatar: u.avatar,
             active: u.activo
         }));
-        res.json(users);
+        res.json(mappedUsers);
     } catch (error) {
         console.error('Get users error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -522,27 +499,15 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/users', authenticateToken, async (req, res) => {
-    // Alias to credentials creation
-    // ... (reuse logic)
-    // For simplicity, we just call the credentials endpoint logic here or redirect
-    // But since we are rewriting the file, let's just add a simple handler that calls the same logic
-    // Or better, let the frontend use /api/credentials for user management as it seems to be doing in AdminPanel
-    // But AdminPanel calls api.users.create which calls /users
-
-    // So we need /api/users endpoints too
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
 
-    // Reuse credentials logic
     const { name, email, password, role } = req.body;
-    // ... implementation similar to credentials
-    // To save space, let's assume AdminPanel uses /api/credentials if we updated api.js, but we didn't update api.users to point to credentials.
-    // So we need to implement /api/users here.
 
     try {
-        const credentials = await readCredentials();
-        if (credentials.usuarios.find(u => u.email === email)) return res.status(400).json({ error: 'Email exists' });
+        const existingUser = await User.findOne({ email });
+        if (existingUser) return res.status(400).json({ error: 'Email exists' });
 
-        const newUser = {
+        const newUser = await User.create({
             id: `user_${Date.now()}`,
             nombre: name,
             email,
@@ -551,10 +516,8 @@ app.post('/api/users', authenticateToken, async (req, res) => {
             avatar: '👤',
             activo: true,
             fecha_creacion: new Date().toISOString()
-        };
+        });
 
-        credentials.usuarios.push(newUser);
-        await writeCredentials(credentials);
         res.json({ success: true, user: newUser });
     } catch (e) {
         res.status(500).json({ error: 'Error' });
@@ -565,12 +528,7 @@ app.delete('/api/users/:id', authenticateToken, async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
     const { id } = req.params;
     try {
-        const credentials = await readCredentials();
-        const idx = credentials.usuarios.findIndex(u => u.id === id);
-        if (idx !== -1) {
-            credentials.usuarios.splice(idx, 1);
-            await writeCredentials(credentials);
-        }
+        await User.deleteOne({ id });
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: 'Error' });

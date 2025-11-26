@@ -13,9 +13,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const DEMO_CREDENTIALS = {
-    student: { email: 'daniel@aula.com', pass: 'est' },
-    teacher: { email: 'ana@aula.com', pass: 'prof' },
-    admin: { email: 'admin@aula.com', pass: 'admin' }
+    student: { email: 'juan@aula.com', pass: '00' },
+    teacher: { email: 'profesor@aula.com', pass: 'profesor2025' },
+    admin: { email: 'admin@aula.com', pass: 'admin2025' }
   };
 
   useEffect(() => {

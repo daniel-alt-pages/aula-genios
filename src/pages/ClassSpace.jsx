@@ -31,6 +31,7 @@ export default function ClassSpace({ classId, onBack }) {
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [selectedMaterial, setSelectedMaterial] = useState(null);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [newPostContent, setNewPostContent] = useState('');
     const [editForm, setEditForm] = useState({ title: '', code: '', description: '', icon: '', color: '' });
 
     useEffect(() => {
@@ -56,10 +57,14 @@ export default function ClassSpace({ classId, onBack }) {
                     });
                 }
 
-                // Cargar posts del tablón (TODO: API)
-                // const posts = await api.posts.getAll(classId);
-                const posts = db.get('posts').filter(p => p.classId === classId);
-                setStreamPosts(posts);
+                // Cargar posts del tablón
+                try {
+                    const posts = await api.posts.getAll(classId);
+                    setStreamPosts(posts);
+                } catch (err) {
+                    console.warn('Error loading posts', err);
+                    setStreamPosts([]);
+                }
 
                 // Cargar materiales de la clase (TODO: API)
                 // const materials = await api.materials.getAll(classId);
@@ -126,6 +131,52 @@ export default function ClassSpace({ classId, onBack }) {
         } catch (error) {
             console.error('Error updating class:', error);
             alert('Error al actualizar la clase');
+        }
+    };
+
+    const handleCreatePost = async (e) => {
+        e.preventDefault();
+        if (!newPostContent.trim()) return;
+
+        try {
+            const newPost = await api.posts.create(classId, newPostContent);
+            setStreamPosts([newPost, ...streamPosts]);
+            setNewPostContent('');
+        } catch (error) {
+            console.error('Error creating post:', error);
+            alert('Error al publicar anuncio');
+        }
+    };
+
+    const handleRemoveStudent = async (studentId) => {
+        if (!window.confirm('¿Estás seguro de eliminar a este estudiante de la clase?')) return;
+        try {
+            await api.classes.removeStudent(classId, studentId);
+            setClassData({
+                ...classData,
+                estudiantes: classData.estudiantes.filter(id => id !== studentId)
+            });
+        } catch (error) {
+            console.error('Error removing student:', error);
+            alert('Error al eliminar estudiante');
+        }
+    };
+
+    const handleAddStudent = async (studentId) => {
+        try {
+            await api.enrollment.enroll({
+                classId,
+                studentId,
+                role: 'student'
+            });
+            setClassData({
+                ...classData,
+                estudiantes: [...(classData.estudiantes || []), studentId]
+            });
+            alert('Estudiante matriculado correctamente');
+        } catch (error) {
+            console.error('Error enrolling student:', error);
+            alert('Error al matricular estudiante: ' + error.message);
         }
     };
 
@@ -238,8 +289,27 @@ export default function ClassSpace({ classId, onBack }) {
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold shadow-lg">
                                         {user.name[0]}
                                     </div>
-                                    <div className="flex-1 text-slate-500 font-medium hover:text-slate-700 transition-colors">
-                                        Anuncia algo a la clase...
+                                    <div className="flex-1">
+                                        {isTeacher ? (
+                                            <form onSubmit={handleCreatePost} className="w-full">
+                                                <textarea
+                                                    value={newPostContent}
+                                                    onChange={(e) => setNewPostContent(e.target.value)}
+                                                    placeholder="Anuncia algo a la clase..."
+                                                    className="w-full bg-transparent border-none focus:ring-0 resize-none text-slate-700 placeholder-slate-400"
+                                                    rows={2}
+                                                />
+                                                <div className="flex justify-end mt-2">
+                                                    <Button type="submit" size="sm" disabled={!newPostContent.trim()}>
+                                                        Publicar
+                                                    </Button>
+                                                </div>
+                                            </form>
+                                        ) : (
+                                            <div className="text-slate-500 font-medium">
+                                                Bienvenido al tablón de anuncios
+                                            </div>
+                                        )}
                                     </div>
                                 </Card>
 
@@ -310,7 +380,11 @@ export default function ClassSpace({ classId, onBack }) {
                                         >
                                             <div className="flex items-start gap-4">
                                                 <div className="text-5xl flex-shrink-0 group-hover:scale-110 transition-transform">
-                                                    {material.type === 'link' ? '🔗' : FileManager.getFileIcon(material.type)}
+                                                    {material.type.includes('image') ? (
+                                                        <img src={material.url} alt="" className="w-16 h-16 object-cover rounded-lg shadow-sm border border-slate-100" />
+                                                    ) : (
+                                                        material.type === 'link' ? '🔗' : FileManager.getFileIcon(material.type)
+                                                    )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <h3 className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors truncate">
@@ -447,14 +521,35 @@ export default function ClassSpace({ classId, onBack }) {
                                     <span className="bg-blue-100 text-blue-700 p-2 rounded-lg"><GraduationCap size={20} /></span>
                                     Estudiantes ({classData.estudiantes?.length || 0})
                                 </h3>
+                                {isTeacher && (
+                                    <div className="mb-4">
+                                        <Button onClick={() => {
+                                            const studentId = prompt('Ingrese el ID del estudiante a matricular:');
+                                            if (studentId) handleAddStudent(studentId);
+                                        }} size="sm" className="w-full border-dashed border-2 border-slate-300 bg-transparent text-slate-600 hover:border-blue-500 hover:text-blue-600">
+                                            <Plus size={16} className="mr-2" /> Matricular Estudiante
+                                        </Button>
+                                    </div>
+                                )}
                                 <div className="space-y-3">
                                     {classData.estudiantes && classData.estudiantes.length > 0 ? (
                                         classData.estudiantes.map((studentId, idx) => (
-                                            <div key={idx} className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg transition-colors border-b border-slate-50 last:border-0">
-                                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                                                    S
+                                            <div key={idx} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg transition-colors border-b border-slate-50 last:border-0">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                                        S
+                                                    </div>
+                                                    <p className="text-slate-700 font-medium">Estudiante {studentId.substring(0, 8)}...</p>
                                                 </div>
-                                                <p className="text-slate-700 font-medium">Estudiante {studentId.substring(0, 8)}...</p>
+                                                {isTeacher && (
+                                                    <button
+                                                        onClick={() => handleRemoveStudent(studentId)}
+                                                        className="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
+                                                        title="Eliminar estudiante"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
                                             </div>
                                         ))
                                     ) : (
