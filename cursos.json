@@ -1,0 +1,28 @@
+{
+  "cursos": [
+    {
+      "id": "curso-ejemplo-1",
+      "nombre": "Lectura Crítica",
+      "seccion": "Grado 11-A",
+      "profesorId": "profesor001",
+      "profesorNombre": "Profesor Principal",
+      "color": "bg-gradient-to-br from-blue-500 to-indigo-600",
+      "icono": "📚",
+      "descripcion": "Preparación ICFES",
+      "estudiantes": [],
+      "modulos": []
+    },
+    {
+      "id": "e72c2a4a-e6ff-4eeb-bb11-14d98282abaa",
+      "nombre": "jjj",
+      "seccion": "Sección A",
+      "profesorId": "profesor001",
+      "color": "bg-gradient-to-br from-blue-500 to-indigo-600",
+      "icono": "📚",
+      "descripcion": "",
+      "estudiantes": [],
+      "modulos": [],
+      "fecha_creacion": "2025-11-26T04:00:54.501Z"
+    }
+  ]
+}

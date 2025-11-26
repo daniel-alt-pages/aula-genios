@@ -85,11 +85,15 @@ export const eventsAPI = {
 };
 
 export const enrollmentAPI = {
-    enroll: async (enrollmentData) => apiFetch('/enrollment', {
+    enroll: async (enrollmentData) => apiFetch(`/classes/${enrollmentData.classId}/enroll`, {
         method: 'POST',
-        body: JSON.stringify(enrollmentData)
+        body: JSON.stringify({ studentId: enrollmentData.studentId })
     }),
-    getStudentClasses: async (studentId) => apiFetch(`/classes/student/${studentId}`)
+    getStudentClasses: async (studentId) => {
+        // El backend ya filtra por el usuario autenticado en /classes
+        const data = await apiFetch('/classes');
+        return data; // El backend devuelve { success: true, classes: [] }
+    }
 };
 
 export const forumAPI = {
@@ -146,9 +150,31 @@ export const credentialsAPI = {
     }
 };
 
+export const classesAPI = {
+    getAll: async () => {
+        const data = await apiFetch('/classes');
+        return data.classes || [];
+    },
+    create: async (classData) => {
+        const data = await apiFetch('/classes', {
+            method: 'POST',
+            body: JSON.stringify(classData)
+        });
+        return data.class;
+    },
+    update: async (id, classData) => apiFetch(`/classes/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(classData)
+    }),
+    delete: async (id) => apiFetch(`/classes/${id}`, {
+        method: 'DELETE'
+    })
+};
+
 export default {
     auth: authAPI,
     courses: coursesAPI,
+    classes: classesAPI,
     users: usersAPI,
     chat: chatAPI,
     events: eventsAPI,

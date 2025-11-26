@@ -11,7 +11,7 @@ import {
   Trash2,
   BarChart2
 } from 'lucide-react';
-import { db } from '../lib/db';
+import api from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 
@@ -27,24 +27,10 @@ export default function TeacherDashboard({ onClassClick }) {
 
   const loadClasses = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/classes', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setClasses(data.classes || []);
-      } else {
-        const localClasses = db.get('classes').filter(c => c.teacherId === 'prof1');
-        setClasses(localClasses);
-      }
+      const data = await api.classes.getAll();
+      setClasses(data);
     } catch (error) {
       console.error('Error al cargar clases:', error);
-      const localClasses = db.get('classes').filter(c => c.teacherId === 'prof1');
-      setClasses(localClasses);
     } finally {
       setLoading(false);
     }
@@ -77,38 +63,12 @@ export default function TeacherDashboard({ onClassClick }) {
     if (!name) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/classes', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setClasses([...classes, data.class]);
-        alert('✅ Clase creada exitosamente');
-      } else {
-        throw new Error('Error al crear clase');
-      }
+      const newClass = await api.classes.create({ name });
+      setClasses([...classes, newClass]);
+      alert('✅ Clase creada exitosamente');
     } catch (error) {
       console.error('Error:', error);
-      const newClass = {
-        id: Date.now(),
-        name,
-        section: 'Nueva Sección',
-        students: 0,
-        color: 'bg-gradient-to-br from-blue-500 to-indigo-600',
-        icon: '📘',
-        teacherId: 'prof1',
-        teacherName: 'Profesor',
-        progress: 0
-      };
-      db.add('classes', newClass);
-      setClasses([...classes, newClass]);
+      alert('Error al crear la clase');
     }
   };
 
