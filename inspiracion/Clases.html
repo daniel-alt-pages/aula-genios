@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aulas Virtuales - Seamos Genios</title>
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../Elementos/css/clases.css">
+    <link rel="shortcut icon" href="../Elementos/img/logo1.png" type="image/x-icon">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <button class="back-btn" id="backBtn">
+                <i class="bi bi-arrow-left"></i>
+            </button>
+            <img src="../Elementos/img/logo1.png" alt="Seamos Genios Logo" class="header-logo">
+            <h1>Aulas Virtuales</h1>
+        </div>
+        <div class="header-right">
+            <div class="user-info" id="userInfoContainer">
+                <span class="user-name" id="userName">USUARIO</span>
+                <div class="user-avatar" id="userAvatarContainer">
+                    <div class="user-avatar-default" id="userAvatarDefault">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <img class="user-avatar-image" id="userAvatarImage" style="display: none;" src=""
+                        alt="Foto de perfil">
+                </div>
+                <div class="user-dropdown">
+                    <button class="user-menu-btn" id="userMenuBtn">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="user-dropdown-menu" id="userDropdownMenu">
+                        <a href="panelUsuario.html" class="dropdown-item">
+                            <i class="bi bi-person-gear"></i>
+                            Configuración
+                        </a>
+                        <hr class="dropdown-divider">
+                        <button class="dropdown-item" id="logoutBtnDropdown">
+                            <i class="bi bi-box-arrow-right"></i>
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Clases Grid -->
+        <div class="clases-grid" id="clasesGrid">
+            <!-- Las clases se cargarán dinámicamente -->
+        </div>
+    </main>
+
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script src="../Elementos/js/config.js"></script>
+    <script src="../Elementos/js/clases.js"></script>
+</body>
+
+</html>

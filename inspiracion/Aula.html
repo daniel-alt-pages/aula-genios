@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula - Seamos Genios</title>
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../Elementos/css/aula.css">
+    <link rel="shortcut icon" href="../Elementos/img/logo1.png" type="image/x-icon">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <button class="back-btn" id="backBtn">
+                <i class="bi bi-arrow-left"></i>
+            </button>
+            <img src="../Elementos/img/logo1.png" alt="Seamos Genios Logo" class="header-logo">
+            <h1 id="aulaTitle">Aula</h1>
+        </div>
+        <div class="header-right">
+            <div class="user-info" id="userInfoContainer">
+                <span class="user-name" id="userName">USUARIO</span>
+                <div class="user-avatar" id="userAvatarContainer">
+                    <div class="user-avatar-default" id="userAvatarDefault">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <img class="user-avatar-image" id="userAvatarImage" style="display: none;" src="" alt="Foto de perfil">
+                </div>
+                <div class="user-dropdown">
+                    <button class="user-menu-btn" id="userMenuBtn">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="user-dropdown-menu" id="userDropdownMenu">
+                        <a href="panelUsuario.html" class="dropdown-item">
+                            <i class="bi bi-person-gear"></i>
+                            Configuración
+                        </a>
+                        <hr class="dropdown-divider">
+                        <button class="dropdown-item" id="logoutBtnDropdown">
+                            <i class="bi bi-box-arrow-right"></i>
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Tabs Navigation -->
+        <div class="tabs-container">
+            <button class="tab-btn active" data-tab="anuncios">
+                <i class="bi bi-megaphone"></i>
+                Anuncios
+            </button>
+            <button class="tab-btn" data-tab="tareas">
+                <i class="bi bi-clipboard-check"></i>
+                Tareas
+            </button>
+            <button class="tab-btn" data-tab="materiales">
+                <i class="bi bi-folder"></i>
+                Materiales
+            </button>
+            <button class="tab-btn" data-tab="estudiantes" id="estudiantesTab" style="display: none;">
+                <i class="bi bi-people"></i>
+                Estudiantes
+            </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Anuncios Tab -->
+            <div class="tab-pane active" id="anunciosPane">
+                <div class="create-post-container" id="createPostContainer" style="display: none;">
+                    <button class="create-post-btn" id="createPostBtn">
+                        <i class="bi bi-plus-circle"></i>
+                        Crear Anuncio
+                    </button>
+                </div>
+                <div class="posts-container" id="postsContainer">
+                    <!-- Posts will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Tareas Tab -->
+            <div class="tab-pane" id="tareasPane">
+                <div class="create-task-container" id="createTaskContainer" style="display: none;">
+                    <button class="create-task-btn" id="createTaskBtn">
+                        <i class="bi bi-plus-circle"></i>
+                        Crear Tarea
+                    </button>
+                </div>
+                <div class="tasks-container" id="tasksContainer">
+                    <!-- Tasks will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Materiales Tab -->
+            <div class="tab-pane" id="materialesPane">
+                <div class="create-material-container" id="createMaterialContainer" style="display: none;">
+                    <button class="create-material-btn" id="createMaterialBtn">
+                        <i class="bi bi-plus-circle"></i>
+                        Agregar Material
+                    </button>
+                </div>
+                <div class="materials-container" id="materialsContainer">
+                    <!-- Materials will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Estudiantes Tab -->
+            <div class="tab-pane" id="estudiantesPane">
+                <div class="students-container" id="studentsContainer">
+                    <!-- Students will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Post Modal -->
+    <div class="modal" id="createPostModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Crear Anuncio</h3>
+                <button class="close-btn" id="closePostModal">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createPostForm">
+                    <div class="input-group">
+                        <label for="postTitle">Título</label>
+                        <input type="text" id="postTitle" required placeholder="Título del anuncio">
+                    </div>
+                    <div class="input-group">
+                        <label for="postContent">Descripción</label>
+                        <textarea id="postContent" rows="5" required placeholder="Escribe tu anuncio..."></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="postImage">Imagen (opcional)</label>
+                        <input type="file" id="postImage" accept="image/*">
+                        <div class="image-preview" id="imagePreview" style="display: none;">
+                            <img id="imagePreviewImg" src="" alt="Preview">
+                            <button type="button" class="remove-image-btn" id="removeImageBtn">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="postVideoType">Video (opcional)</label>
+                        <select id="postVideoType">
+                            <option value="">Sin video</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="drive">Google Drive</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="postVideoUrlGroup" style="display: none;">
+                        <label for="postVideoUrl">URL del Video</label>
+                        <input type="url" id="postVideoUrl" placeholder="https://...">
+                        <div class="url-help" id="postVideoHelp" style="display: none;">
+                            <i class="bi bi-info-circle"></i>
+                            <span id="postVideoHelpText"></span>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" id="cancelPost">Cancelar</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="bi bi-send"></i>
+                            Publicar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Task Modal -->
+    <div class="modal" id="createTaskModal">
+        <div class="modal-content modal-content-large">
+            <div class="modal-header">
+                <h3>Crear Tarea</h3>
+                <button class="close-btn" id="closeTaskModal">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createTaskForm">
+                    <div class="input-group">
+                        <label for="taskTitle">Título</label>
+                        <input type="text" id="taskTitle" required placeholder="Título de la tarea">
+                    </div>
+                    <div class="input-group">
+                        <label for="taskDescription">Descripción</label>
+                        <textarea id="taskDescription" rows="4" required placeholder="Descripción detallada de la tarea"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="taskPoints">Puntos</label>
+                        <input type="number" id="taskPoints" min="0" max="100" placeholder="Ej: 100">
+                    </div>
+                    <div class="input-group">
+                        <label for="taskDueDate">Fecha de Entrega</label>
+                        <input type="datetime-local" id="taskDueDate" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="taskImage">Imagen (opcional)</label>
+                        <input type="file" id="taskImage" accept="image/*">
+                        <div class="image-preview" id="taskImagePreview" style="display: none;">
+                            <img id="taskImagePreviewImg" src="" alt="Preview">
+                            <button type="button" class="remove-image-btn" id="removeTaskImageBtn">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="taskVideoType">Video (opcional)</label>
+                        <select id="taskVideoType">
+                            <option value="">Sin video</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="drive">Google Drive</option>
+                        </select>
+                    </div>
+                    <div class="input-group" id="taskVideoUrlGroup" style="display: none;">
+                        <label for="taskVideoUrl">URL del Video</label>
+                        <input type="url" id="taskVideoUrl" placeholder="https://...">
+                        <div class="url-help" id="taskVideoHelp" style="display: none;">
+                            <i class="bi bi-info-circle"></i>
+                            <span id="taskVideoHelpText"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="taskDriveUrl">Archivos de Drive (opcional)</label>
+                        <input type="url" id="taskDriveUrl" placeholder="URL de carpeta, PDF o archivo de Drive">
+                        <div class="url-help" style="display: flex;">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Puedes agregar enlaces a carpetas, PDFs o cualquier archivo de Google Drive. Asegúrate de que tengan permisos públicos.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" id="cancelTask">Cancelar</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="bi bi-check-lg"></i>
+                            Crear Tarea
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Task Modal (for students) -->
+    <div class="modal" id="submitTaskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Entregar Tarea</h3>
+                <button class="close-btn" onclick="closeSubmitTaskModal()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="submitTaskForm">
+                    <input type="hidden" id="submitTaskId">
+                    <div class="input-group">
+                        <label for="submissionComment">Comentario (opcional)</label>
+                        <textarea id="submissionComment" rows="3" placeholder="Agrega un comentario sobre tu entrega..."></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="submissionDriveUrl">Enlace de Drive</label>
+                        <input type="url" id="submissionDriveUrl" required placeholder="https://drive.google.com/...">
+                        <div class="url-help" style="display: flex;">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Sube tu tarea a Google Drive y pega el enlace aquí. Asegúrate de dar permisos de visualización.</span>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" onclick="closeSubmitTaskModal()">Cancelar</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="bi bi-send"></i>
+                            Entregar Tarea
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Submissions Modal (for teachers) -->
+    <div class="modal" id="viewSubmissionsModal">
+        <div class="modal-content modal-content-large">
+            <div class="modal-header">
+                <h3>Entregas de Estudiantes</h3>
+                <button class="close-btn" onclick="closeSubmissionsModal()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="submissionsContainer">
+                    <!-- Submissions will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Material Modal -->
+    <div class="modal" id="createMaterialModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Agregar Material</h3>
+                <button class="close-btn" id="closeMaterialModal">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createMaterialForm">
+                    <div class="input-group">
+                        <label for="materialTitle">Título</label>
+                        <input type="text" id="materialTitle" required placeholder="Título del material">
+                    </div>
+                    <div class="input-group">
+                        <label for="materialDescription">Descripción</label>
+                        <textarea id="materialDescription" rows="3" required placeholder="Descripción del material"></textarea>
+                    </div>
+                    
+                    <!-- Imágenes -->
+                    <div class="input-group">
+                        <label>Imágenes (opcional)</label>
+                        <input type="file" id="materialImages" accept="image/*" multiple style="display: none;">
+                        <button type="button" class="upload-btn" id="uploadMaterialImagesBtn">
+                            <i class="bi bi-image"></i>
+                            Subir Imágenes
+                        </button>
+                        <div id="materialImagesPreview" class="images-preview"></div>
+                    </div>
+
+                    <!-- Videos -->
+                    <div class="input-group">
+                        <label>Videos (opcional)</label>
+                        <div class="video-input-container">
+                            <select id="materialVideoType" class="video-type-select">
+                                <option value="">Tipo de video</option>
+                                <option value="youtube">YouTube</option>
+                                <option value="drive">Google Drive</option>
+                            </select>
+                            <input type="url" id="materialVideoUrl" placeholder="URL del video" class="video-url-input">
+                            <button type="button" class="add-video-btn" id="addMaterialVideoBtn">
+                                <i class="bi bi-plus-circle"></i>
+                                Agregar
+                            </button>
+                        </div>
+                        <div id="materialVideosPreview" class="videos-preview"></div>
+                    </div>
+
+                    <!-- Drive Files -->
+                    <div class="input-group">
+                        <label for="materialDriveUrl">Carpeta de Drive (opcional)</label>
+                        <input type="url" id="materialDriveUrl" placeholder="https://drive.google.com/...">
+                        <small>URL de carpeta compartida de Google Drive</small>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" id="cancelMaterial">Cancelar</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="bi bi-check-lg"></i>
+                            Agregar Material
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Modal (for fullscreen images and videos) -->
+    <div class="modal" id="mediaModal" onclick="closeMediaModal()">
+        <div class="media-modal-content" id="mediaModalContent" onclick="event.stopPropagation()">
+            <!-- Media content will be loaded here -->
+        </div>
+        <button class="media-close-btn" onclick="closeMediaModal()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content modal-content-small">
+            <div class="modal-header">
+                <h3 id="confirmTitle">Confirmar acción</h3>
+                <button class="close-btn" onclick="closeConfirmModal()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">¿Estás seguro de realizar esta acción?</p>
+            </div>
+            <div class="modal-actions" style="padding: 0 1.5rem 1.5rem;">
+                <button type="button" class="cancel-btn" onclick="closeConfirmModal()">Cancelar</button>
+                <button type="button" class="submit-btn" id="confirmBtn" style="background: #dc3545;">
+                    <i class="bi bi-check-lg"></i>
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div class="modal" id="alertModal">
+        <div class="modal-content modal-content-small">
+            <div class="modal-header">
+                <h3 id="alertTitle">Notificación</h3>
+                <button class="close-btn" onclick="closeAlertModal()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="alertMessage">Mensaje</p>
+            </div>
+            <div class="modal-actions" style="padding: 0 1.5rem 1.5rem;">
+                <button type="button" class="submit-btn" onclick="closeAlertModal()">
+                    <i class="bi bi-check-lg"></i>
+                    Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Post Modal -->
+    <div class="modal" id="editPostModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Anuncio</h3>
+                <button class="close-btn" onclick="closeEditPostModal()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editPostForm">
+                    <input type="hidden" id="editPostId">
+                    
+                    <div class="input-group">
+                        <label for="editPostTitle">Título (opcional)</label>
+                        <input type="text" id="editPostTitle" placeholder="Título del anuncio">
+                    </div>
+                    <div class="input-group">
+                        <label for="editPostContent">Descripción</label>
+                        <textarea id="editPostContent" rows="5" required placeholder="Escribe tu anuncio..."></textarea>
+                    </div>
+                    
+                    <!-- Imagen Actual -->
+                    <div class="input-group">
+                        <label>Imagen Actual</label>
+                        <div id="editPostCurrentImageContainer" class="current-images-container"></div>
+                    </div>
+
+                    <!-- Agregar Nueva Imagen -->
+                    <div class="input-group">
+                        <label>Cambiar/Agregar Imagen (opcional)</label>
+                        <input type="file" id="editPostNewImage" accept="image/*" style="display: none;">
+                        <button type="button" class="upload-btn" id="uploadEditPostImageBtn">
+                            <i class="bi bi-image"></i>
+                            Subir Imagen
+                        </button>
+                        <div id="editPostNewImagePreview" class="images-preview"></div>
+                    </div>
+
+                    <!-- Video Actual -->
+                    <div class="input-group">
+                        <label>Video Actual</label>
+                        <div id="editPostCurrentVideoContainer" class="current-videos-container"></div>
+                    </div>
+
+                    <!-- Cambiar/Agregar Video -->
+                    <div class="input-group">
+                        <label>Cambiar/Agregar Video (opcional)</label>
+                        <div class="video-input-container">
+                            <select id="editPostVideoType" class="video-type-select">
+                                <option value="">Sin video</option>
+                                <option value="youtube">YouTube</option>
+                                <option value="drive">Google Drive</option>
+                            </select>
+                            <input type="url" id="editPostVideoUrl" placeholder="URL del video" class="video-url-input">
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" onclick="closeEditPostModal()">Cancelar</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="bi bi-check-lg"></i>
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Task Modal -->
+    <div class="modal" id="editTaskModal">
+        <div class="modal-content modal-content-large">
+            <div class="modal-header">
+                <h3>Editar Tarea</h3>
+                <button class="close-btn" onclick="closeEditTaskModal()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editTaskForm">
+                    <input type="hidden" id="editTaskId">
+                    
+                    <div class="input-group">
+                        <label for="editTaskTitle">Título</label>
+                        <input type="text" id="editTaskTitle" required placeholder="Título de la tarea">
+                    </div>
+                    <div class="input-group">
+                        <label for="editTaskDescription">Descripción</label>
+                        <textarea id="editTaskDescription" rows="4" required placeholder="Descripción detallada de la tarea"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="editTaskPoints">Puntos</label>
+                        <input type="number" id="editTaskPoints" min="0" max="100" placeholder="Ej: 100">
+                    </div>
+                    <div class="input-group">
+                        <label for="editTaskDueDate">Fecha de Entrega</label>
+                        <input type="datetime-local" id="editTaskDueDate" required>
+                    </div>
+                    
+                    <!-- Imagen Actual -->
+                    <div class="input-group">
+                        <label>Imagen Actual</label>
+                        <div id="editTaskCurrentImageContainer" class="current-images-container"></div>
+                    </div>
+
+                    <!-- Agregar Nueva Imagen -->
+                    <div class="input-group">
+                        <label>Cambiar/Agregar Imagen (opcional)</label>
+                        <input type="file" id="editTaskNewImage" accept="image/*" style="display: none;">
+                        <button type="button" class="upload-btn" id="uploadEditTaskImageBtn">
+                            <i class="bi bi-image"></i>
+                            Subir Imagen
+                        </button>
+                        <div id="editTaskNewImagePreview" class="images-preview"></div>
+                    </div>
+
+                    <!-- Video Actual -->
+                    <div class="input-group">
+                        <label>Video Actual</label>
+                        <div id="editTaskCurrentVideoContainer" class="current-videos-container"></div>
+                    </div>
+
+                    <!-- Cambiar/Agregar Video -->
+                    <div class="input-group">
+                        <label>Cambiar/Agregar Video (opcional)</label>
+                        <div class="video-input-container">
+                            <select id="editTaskVideoType" class="video-type-select">
+                                <option value="">Sin video</option>
+                                <option value="youtube">YouTube</option>
+                                <option value="drive">Google Drive</option>
+                            </select>
+                            <input type="url" id="editTaskVideoUrl" placeholder="URL del video" class="video-url-input">
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="editTaskDriveUrl">Archivos de Drive (opcional)</label>
+                        <input type="url" id="editTaskDriveUrl" placeholder="URL de carpeta, PDF o archivo de Drive">
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" onclick="closeEditTaskModal()">Cancelar</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="bi bi-check-lg"></i>
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Material Modal -->
+    <div class="modal" id="editMaterialModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Material</h3>
+                <button class="close-btn" onclick="closeEditMaterialModal()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editMaterialForm">
+                    <input type="hidden" id="editMaterialId">
+                    <div class="input-group">
+                        <label for="editMaterialTitle">Título</label>
+                        <input type="text" id="editMaterialTitle" required placeholder="Título del material">
+                    </div>
+                    <div class="input-group">
+                        <label for="editMaterialDescription">Descripción</label>
+                        <textarea id="editMaterialDescription" rows="3" required placeholder="Descripción del material"></textarea>
+                    </div>
+                    
+                    <!-- Imágenes Actuales -->
+                    <div class="input-group">
+                        <label>Imágenes Actuales</label>
+                        <div id="editMaterialCurrentImages" class="current-images-container"></div>
+                    </div>
+
+                    <!-- Agregar Nuevas Imágenes -->
+                    <div class="input-group">
+                        <label>Agregar Nuevas Imágenes (opcional)</label>
+                        <input type="file" id="editMaterialNewImages" accept="image/*" multiple style="display: none;">
+                        <button type="button" class="upload-btn" id="uploadEditMaterialImagesBtn">
+                            <i class="bi bi-image"></i>
+                            Subir Imágenes
+                        </button>
+                        <div id="editMaterialNewImagesPreview" class="images-preview"></div>
+                    </div>
+
+                    <!-- Videos Actuales -->
+                    <div class="input-group">
+                        <label>Videos Actuales</label>
+                        <div id="editMaterialCurrentVideos" class="current-videos-container"></div>
+                    </div>
+
+                    <!-- Agregar Nuevos Videos -->
+                    <div class="input-group">
+                        <label>Agregar Nuevos Videos (opcional)</label>
+                        <div class="video-input-container">
+                            <select id="editMaterialVideoType" class="video-type-select">
+                                <option value="">Tipo de video</option>
+                                <option value="youtube">YouTube</option>
+                                <option value="drive">Google Drive</option>
+                            </select>
+                            <input type="url" id="editMaterialVideoUrl" placeholder="URL del video" class="video-url-input">
+                            <button type="button" class="add-video-btn" id="addEditMaterialVideoBtn">
+                                <i class="bi bi-plus-circle"></i>
+                                Agregar
+                            </button>
+                        </div>
+                        <div id="editMaterialNewVideosPreview" class="videos-preview"></div>
+                    </div>
+
+                    <!-- Drive Files -->
+                    <div class="input-group">
+                        <label for="editMaterialDriveUrl">Carpeta de Drive (opcional)</label>
+                        <input type="url" id="editMaterialDriveUrl" placeholder="https://drive.google.com/...">
+                        <small>URL de carpeta compartida de Google Drive</small>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="cancel-btn" onclick="closeEditMaterialModal()">Cancelar</button>
+                        <button type="submit" class="submit-btn">
+                            <i class="bi bi-check-lg"></i>
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script src="../Elementos/js/config.js"></script>
+    <script src="../Elementos/js/aula.js"></script>
+</body>
+
+</html>
