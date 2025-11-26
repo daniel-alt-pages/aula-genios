@@ -3,7 +3,7 @@ import {
     MessageSquare, Users, BookOpen, Video, Calendar,
     MoreVertical, Send, Award, CheckCircle,
     Clock, ArrowLeft, Plus, GripVertical, Edit2, Settings, Trash2, Sparkles,
-    ChevronRight, ChevronLeft, Lock, Unlock
+    ChevronRight, ChevronLeft, Lock, Unlock, X, ExternalLink, GraduationCap, FileText
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -425,12 +425,95 @@ export default function ClassSpace({ classId, onBack }) {
 
                     {/* PEOPLE */}
                     {activeTab === 'people' && (
-                        <div className="text-center py-10 text-slate-500">
-                            <p>Lista de personas (Próximamente)</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <Card className="p-6">
+                                <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <span className="bg-purple-100 text-purple-700 p-2 rounded-lg"><Users size={20} /></span>
+                                    Profesor
+                                </h3>
+                                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md">
+                                        {classData.profesorNombre ? classData.profesorNombre[0] : 'P'}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-900">{classData.profesorNombre || 'Profesor Asignado'}</p>
+                                        <p className="text-sm text-slate-500">Docente Principal</p>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            <Card className="p-6">
+                                <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <span className="bg-blue-100 text-blue-700 p-2 rounded-lg"><GraduationCap size={20} /></span>
+                                    Estudiantes ({classData.estudiantes?.length || 0})
+                                </h3>
+                                <div className="space-y-3">
+                                    {classData.estudiantes && classData.estudiantes.length > 0 ? (
+                                        classData.estudiantes.map((studentId, idx) => (
+                                            <div key={idx} className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg transition-colors border-b border-slate-50 last:border-0">
+                                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                                                    S
+                                                </div>
+                                                <p className="text-slate-700 font-medium">Estudiante {studentId.substring(0, 8)}...</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-slate-500 italic text-center py-4">No hay estudiantes matriculados aún.</p>
+                                    )}
+                                </div>
+                            </Card>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Modal de Previsualización de Archivos */}
+            {selectedMaterial && (
+                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden shadow-2xl relative">
+                        <div className="p-4 border-b flex justify-between items-center bg-slate-50">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                                    {FileManager.getFileIcon(selectedMaterial.type)}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg text-slate-800">{selectedMaterial.title}</h3>
+                                    <p className="text-xs text-slate-500 uppercase tracking-wider">{selectedMaterial.type}</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button variant="secondary" onClick={() => window.open(selectedMaterial.url, '_blank')} title="Descargar / Abrir en nueva pestaña">
+                                    <ExternalLink size={18} className="mr-2" /> Abrir Original
+                                </Button>
+                                <button
+                                    onClick={() => setSelectedMaterial(null)}
+                                    className="p-2 hover:bg-red-100 hover:text-red-600 rounded-full transition-colors"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 bg-slate-900 flex items-center justify-center overflow-hidden relative">
+                            {selectedMaterial.type.includes('image') ? (
+                                <img src={selectedMaterial.url} alt={selectedMaterial.title} className="max-w-full max-h-full object-contain" />
+                            ) : selectedMaterial.type.includes('pdf') ? (
+                                <iframe src={selectedMaterial.url} className="w-full h-full bg-white" title={selectedMaterial.title}></iframe>
+                            ) : selectedMaterial.type.includes('video') ? (
+                                <video src={selectedMaterial.url} controls className="max-w-full max-h-full" />
+                            ) : (
+                                <div className="text-center text-white">
+                                    <FileText size={80} className="mx-auto text-slate-500 mb-6 opacity-50" />
+                                    <p className="text-xl font-medium mb-2">Vista previa no disponible</p>
+                                    <p className="text-slate-400 mb-6">Este tipo de archivo no se puede previsualizar aquí.</p>
+                                    <Button onClick={() => window.open(selectedMaterial.url, '_blank')} className="bg-white text-slate-900 hover:bg-slate-200">
+                                        Descargar Archivo
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Modal de subida de materiales */}
             {showUploadModal && (

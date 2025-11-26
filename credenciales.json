@@ -1,27 +1,37 @@
 {
-    "plataforma": "Aula Genios - Seamos Genios Colombia",
-    "version": "2.0.0",
-    "fecha_actualizacion": "2025-11-25",
-    "usuarios": [
-        {
-            "id": "admin001",
-            "nombre": "Administrador Principal",
-            "email": "admin@aula.com",
-            "password": "admin2025",
-            "rol": "admin",
-            "avatar": "👨‍💼",
-            "activo": true,
-            "fecha_creacion": "2025-11-25"
-        },
-        {
-            "id": "profesor001",
-            "nombre": "Profesor Principal",
-            "email": "profesor@aula.com",
-            "password": "profesor2025",
-            "rol": "teacher",
-            "avatar": "👨‍🏫",
-            "activo": true,
-            "fecha_creacion": "2025-11-25"
-        }
-    ]
+  "plataforma": "Aula Genios - Seamos Genios Colombia",
+  "version": "2.0.0",
+  "fecha_actualizacion": "2025-11-26",
+  "usuarios": [
+    {
+      "id": "admin001",
+      "nombre": "Administrador Principal",
+      "email": "admin@aula.com",
+      "password": "admin2025",
+      "rol": "admin",
+      "avatar": "👨‍💼",
+      "activo": true,
+      "fecha_creacion": "2025-11-25"
+    },
+    {
+      "id": "profesor001",
+      "nombre": "Profesor Principal",
+      "email": "profesor@aula.com",
+      "password": "profesor2025",
+      "rol": "teacher",
+      "avatar": "👨‍🏫",
+      "activo": true,
+      "fecha_creacion": "2025-11-25"
+    },
+    {
+      "id": "user_1764131445539",
+      "nombre": "juan",
+      "email": "juan@aula.com",
+      "password": "00",
+      "rol": "student",
+      "avatar": "👤",
+      "activo": true,
+      "fecha_creacion": "2025-11-26T04:30:45.540Z"
+    }
+  ]
 }

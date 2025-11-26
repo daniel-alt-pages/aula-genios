@@ -85,10 +85,18 @@ export const eventsAPI = {
 };
 
 export const enrollmentAPI = {
-    enroll: async (enrollmentData) => apiFetch(`/classes/${enrollmentData.classId}/enroll`, {
-        method: 'POST',
-        body: JSON.stringify({ studentId: enrollmentData.studentId })
-    }),
+    enroll: async (enrollmentData) => {
+        const classId = enrollmentData.classId || enrollmentData.courseId;
+        const studentId = enrollmentData.studentId || enrollmentData.userId;
+        return apiFetch(`/classes/${classId}/enroll`, {
+            method: 'POST',
+            body: JSON.stringify({
+                studentId,
+                userId: studentId, // Enviar ambos por seguridad
+                role: enrollmentData.role
+            })
+        });
+    },
     getStudentClasses: async (studentId) => {
         // El backend ya filtra por el usuario autenticado en /classes
         const data = await apiFetch('/classes');

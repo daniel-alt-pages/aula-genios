@@ -23,6 +23,22 @@
       "estudiantes": [],
       "modulos": [],
       "fecha_creacion": "2025-11-26T04:00:54.501Z"
+    },
+    {
+      "id": "c492207f-72fc-40f4-9d37-f31cfc3675d5",
+      "nombre": "afsasfd",
+      "code": "fasdasf",
+      "seccion": "General",
+      "profesorId": "profesor001",
+      "profesorNombre": "Profesor Principal",
+      "color": "blue",
+      "icono": "📚",
+      "descripcion": "",
+      "estudiantes": [
+        "user_1764131445539"
+      ],
+      "modulos": [],
+      "fecha_creacion": "2025-11-26T04:31:01.288Z"
     }
   ]
 }
